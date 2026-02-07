@@ -18,6 +18,21 @@ RUN npm install --save-exact esbuild && ./node_modules/esbuild/bin/esbuild ./app
 	--loader:.woff2=file
 
 FROM alpine:latest AS production
+
+# Install Chromium for JS rendering support
+RUN apk add --no-cache \
+	chromium \
+	nss \
+	freetype \
+	harfbuzz \
+	ca-certificates \
+	ttf-freefont
+
+# Tell chromedp to use the installed Chromium
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+ENV CHROME_BIN=/usr/bin/chromium-browser
+ENV CHROMEDP_NO_SANDBOX=true
+
 COPY --from=front /home/node/app /app/
 
 ENV WAIT_VERSION 2.9.0

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -35,6 +36,11 @@ func NewJSRenderer() *JSRenderer {
 		chromedp.Flag("disable-extensions", true),
 		chromedp.Flag("disable-background-networking", true),
 	)
+
+	// Use system Chromium if CHROMIUM_PATH is set (e.g. in Docker)
+	if chromiumPath := os.Getenv("CHROMIUM_PATH"); chromiumPath != "" {
+		opts = append(opts, chromedp.ExecPath(chromiumPath))
+	}
 
 	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
 
