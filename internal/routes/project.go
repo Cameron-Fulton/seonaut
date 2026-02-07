@@ -139,6 +139,11 @@ func (h *projectHandler) addPostHandler(w http.ResponseWriter, r *http.Request) 
 		userAgent = r.FormValue("custom_user_agent_text")
 	}
 
+	jsRendering, err := strconv.ParseBool(r.FormValue("js_rendering"))
+	if err != nil {
+		jsRendering = false
+	}
+
 	project := &models.Project{
 		URL:                r.FormValue("url"),
 		IgnoreRobotsTxt:    ignoreRobotsTxt,
@@ -150,6 +155,7 @@ func (h *projectHandler) addPostHandler(w http.ResponseWriter, r *http.Request) 
 		CheckExternalLinks: checkExternalLinks,
 		Archive:            archive,
 		UserAgent:          userAgent,
+		JSRendering:        jsRendering,
 	}
 
 	err = h.ProjectService.SaveProject(project, user.Id)
@@ -320,6 +326,11 @@ func (h *projectHandler) editPostHandler(w http.ResponseWriter, r *http.Request)
 		p.UserAgent = r.FormValue("custom_user_agent_text")
 	} else {
 		p.UserAgent = h.Config.Crawler.Agent
+	}
+
+	p.JSRendering, err = strconv.ParseBool(r.FormValue("js_rendering"))
+	if err != nil {
+		p.JSRendering = false
 	}
 
 	err = h.ProjectService.UpdateProject(&p)

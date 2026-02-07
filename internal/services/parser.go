@@ -2,9 +2,14 @@ package services
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"hash/fnv"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -643,4 +648,249 @@ func (p *Parser) newLink(n *html.Node) (models.Link, error) {
 	}
 
 	return l, nil
+}
+
+// htmlMetaKeywords extracts the meta keywords tag content.
+// ex. <meta name="keywords" content="seo, crawler, audit" />
+func (p *Parser) htmlMetaKeywords() string {
+	keywords, err := htmlquery.Query(p.doc, "//head/meta[@name=\"keywords\"]/@content")
+	if err != nil || keywords == nil {
+		return ""
+	}
+
+	return strings.TrimSpace(htmlquery.SelectAttr(keywords, "content"))
+}
+
+// htmlH1Count returns the number of H1 tags in the document.
+func (p *Parser) htmlH1Count() int {
+	h1s, err := htmlquery.QueryAll(p.doc, "//h1")
+	if err != nil {
+		return 0
+	}
+
+	return len(h1s)
+}
+
+// htmlH2Count returns the number of H2 tags in the document.
+func (p *Parser) htmlH2Count() int {
+	h2s, err := htmlquery.QueryAll(p.doc, "//h2")
+	if err != nil {
+		return 0
+	}
+
+	return len(h2s)
+}
+
+// htmlHasOpenGraph checks if the page has Open Graph meta tags.
+// ex. <meta property="og:title" content="Page Title" />
+func (p *Parser) htmlHasOpenGraph() bool {
+	og, err := htmlquery.Query(p.doc, "//head/meta[starts-with(@property, 'og:')]")
+	if err != nil {
+		return false
+	}
+
+	return og != nil
+}
+
+// htmlHasTwitterCard checks if the page has Twitter Card meta tags.
+// ex. <meta name="twitter:card" content="summary" />
+func (p *Parser) htmlHasTwitterCard() bool {
+	tc, err := htmlquery.Query(p.doc, "//head/meta[starts-with(@name, 'twitter:')]")
+	if err != nil {
+		return false
+	}
+
+	return tc != nil
+}
+
+// htmlSchemaTypes extracts Schema.org types from JSON-LD scripts.
+// Returns a comma-separated string of detected schema types.
+func (p *Parser) htmlSchemaTypes() string {
+	scripts, err := htmlquery.QueryAll(p.doc, "//script[@type='application/ld+json']")
+	if err != nil || len(scripts) == 0 {
+		return ""
+	}
+
+	var types []string
+	for _, s := range scripts {
+		text := htmlquery.InnerText(s)
+		schemaType := extractSchemaType(text)
+		if schemaType != "" {
+			types = append(types, schemaType)
+		}
+	}
+
+	return strings.Join(types, ",")
+}
+
+// extractSchemaType extracts the @type from a JSON-LD string.
+func extractSchemaType(jsonLD string) string {
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonLD), &data); err != nil {
+		// Try parsing as array
+		var arr []map[string]interface{}
+		if err := json.Unmarshal([]byte(jsonLD), &arr); err != nil {
+			return ""
+		}
+		var types []string
+		for _, item := range arr {
+			if t, ok := item["@type"]; ok {
+				types = append(types, fmt.Sprintf("%v", t))
+			}
+		}
+		return strings.Join(types, ",")
+	}
+
+	if t, ok := data["@type"]; ok {
+		return fmt.Sprintf("%v", t)
+	}
+
+	// Check for @graph
+	if graph, ok := data["@graph"]; ok {
+		if graphArr, ok := graph.([]interface{}); ok {
+			var types []string
+			for _, item := range graphArr {
+				if m, ok := item.(map[string]interface{}); ok {
+					if t, ok := m["@type"]; ok {
+						types = append(types, fmt.Sprintf("%v", t))
+					}
+				}
+			}
+			return strings.Join(types, ",")
+		}
+	}
+
+	return ""
+}
+
+// extractBodyText extracts visible text from the body for readability analysis.
+func (p *Parser) extractBodyText() string {
+	body := p.htmlBodyNode()
+	if body == nil {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	var extractText func(*html.Node)
+	extractText = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			if n.Parent != nil && n.Parent.Type == html.ElementNode {
+				tag := n.Parent.Data
+				if tag != "script" && tag != "style" && tag != "noscript" {
+					buf.WriteString(n.Data)
+					buf.WriteString(" ")
+				}
+			}
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			extractText(child)
+		}
+	}
+
+	extractText(body)
+	return strings.TrimSpace(buf.String())
+}
+
+// calculateReadability calculates the Flesch Reading Ease score.
+// Score ranges: 0-30 = Very Difficult, 30-50 = Difficult, 50-60 = Fairly Difficult,
+// 60-70 = Standard, 70-80 = Fairly Easy, 80-90 = Easy, 90-100 = Very Easy.
+func calculateReadability(text string) float64 {
+	if text == "" {
+		return 0
+	}
+
+	words := strings.Fields(text)
+	wordCount := len(words)
+	if wordCount == 0 {
+		return 0
+	}
+
+	// Count sentences (periods, exclamation marks, question marks)
+	sentenceCount := 0
+	sentenceEnders := regexp.MustCompile(`[.!?]+`)
+	sentences := sentenceEnders.FindAllString(text, -1)
+	sentenceCount = len(sentences)
+	if sentenceCount == 0 {
+		sentenceCount = 1
+	}
+
+	// Count syllables
+	totalSyllables := 0
+	for _, word := range words {
+		totalSyllables += countSyllables(strings.ToLower(word))
+	}
+
+	// Flesch Reading Ease = 206.835 - 1.015 * (words/sentences) - 84.6 * (syllables/words)
+	score := 206.835 - 1.015*(float64(wordCount)/float64(sentenceCount)) - 84.6*(float64(totalSyllables)/float64(wordCount))
+
+	// Clamp between 0 and 100
+	score = math.Max(0, math.Min(100, score))
+	return math.Round(score*100) / 100
+}
+
+// countSyllables counts the approximate number of syllables in a word.
+func countSyllables(word string) int {
+	word = strings.ToLower(word)
+	word = regexp.MustCompile(`[^a-z]`).ReplaceAllString(word, "")
+	if len(word) == 0 {
+		return 1
+	}
+
+	if len(word) <= 3 {
+		return 1
+	}
+
+	// Remove trailing 'e'
+	if strings.HasSuffix(word, "e") {
+		word = word[:len(word)-1]
+	}
+
+	// Count vowel groups
+	vowels := regexp.MustCompile(`[aeiouy]+`)
+	matches := vowels.FindAllString(word, -1)
+	count := len(matches)
+
+	if count == 0 {
+		count = 1
+	}
+
+	return count
+}
+
+// calculateSimHash computes a SimHash fingerprint for near-duplicate detection.
+func calculateSimHash(text string) string {
+	if text == "" {
+		return ""
+	}
+
+	words := strings.Fields(strings.ToLower(text))
+	if len(words) == 0 {
+		return ""
+	}
+
+	// Use 64-bit fingerprint vector
+	var v [64]int
+
+	for _, word := range words {
+		h := fnv.New64a()
+		h.Write([]byte(word))
+		hash := h.Sum64()
+
+		for i := 0; i < 64; i++ {
+			if (hash>>uint(i))&1 == 1 {
+				v[i]++
+			} else {
+				v[i]--
+			}
+		}
+	}
+
+	var fingerprint uint64
+	for i := 0; i < 64; i++ {
+		if v[i] > 0 {
+			fingerprint |= 1 << uint(i)
+		}
+	}
+
+	return fmt.Sprintf("%016x", fingerprint)
 }

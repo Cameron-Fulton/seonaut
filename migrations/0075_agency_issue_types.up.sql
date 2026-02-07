@@ -1,0 +1,11 @@
+INSERT INTO issue_types (id, type, priority) VALUES(80, 'ERROR_MULTIPLE_H1_TAGS', 2);
+INSERT INTO issue_types (id, type, priority) VALUES(81, 'ERROR_MULTIPLE_H2_TAGS', 3);
+INSERT INTO issue_types (id, type, priority) VALUES(82, 'ERROR_META_REFRESH_REDIRECT', 2);
+INSERT INTO issue_types (id, type, priority) VALUES(83, 'ERROR_LOREM_IPSUM', 1);
+INSERT INTO issue_types (id, type, priority) VALUES(84, 'ERROR_IMAGE_LINK_MISSING_TITLE', 3);
+INSERT INTO issue_types (id, type, priority) VALUES(85, 'ERROR_LOW_READABILITY', 3);
+INSERT INTO issue_types (id, type, priority) VALUES(86, 'ERROR_MISSING_SCHEMA_MARKUP', 3);
+INSERT INTO issue_types (id, type, priority) VALUES(87, 'ERROR_MISSING_OPEN_GRAPH', 3);
+INSERT INTO issue_types (id, type, priority) VALUES(88, 'ERROR_MISSING_TWITTER_CARD', 3);
+INSERT INTO issue_types (id, type, priority) VALUES(89, 'ERROR_NEAR_DUPLICATE_CONTENT', 2);
+INSERT INTO issue_types (id, type, priority) VALUES(90, 'ERROR_MISSING_META_KEYWORDS', 3);

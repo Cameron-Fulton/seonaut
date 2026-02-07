@@ -25,9 +25,10 @@ func (ds *ProjectRepository) SaveProject(project *models.Project, uid int) {
 			user_id,
 			check_external_links,
 			archive,
-			user_agent
+			user_agent,
+			js_rendering
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	stmt, _ := ds.DB.Prepare(query)
@@ -44,6 +45,7 @@ func (ds *ProjectRepository) SaveProject(project *models.Project, uid int) {
 		project.CheckExternalLinks,
 		project.Archive,
 		project.UserAgent,
+		project.JSRendering,
 	)
 	if err != nil {
 		log.Printf("saveProject: %v\n", err)
@@ -67,7 +69,8 @@ func (ds *ProjectRepository) FindProjectsByUser(uid int) []models.Project {
 			created,
 			check_external_links,
 			archive,
-			user_agent
+			user_agent,
+			js_rendering
 		FROM projects
 		WHERE user_id = ?
 		ORDER BY url ASC`
@@ -94,6 +97,7 @@ func (ds *ProjectRepository) FindProjectsByUser(uid int) []models.Project {
 			&p.CheckExternalLinks,
 			&p.Archive,
 			&p.UserAgent,
+			&p.JSRendering,
 		)
 		if err != nil {
 			log.Println(err)
@@ -122,7 +126,8 @@ func (ds *ProjectRepository) FindProjectById(id int, uid int) (models.Project, e
 			created,
 			check_external_links,
 			archive,
-			user_agent
+			user_agent,
+			js_rendering
 		FROM projects
 		WHERE id = ? AND user_id = ?`
 
@@ -143,6 +148,7 @@ func (ds *ProjectRepository) FindProjectById(id int, uid int) (models.Project, e
 		&p.CheckExternalLinks,
 		&p.Archive,
 		&p.UserAgent,
+		&p.JSRendering,
 	)
 	if err != nil {
 		log.Println(err)
@@ -183,7 +189,8 @@ func (ds *ProjectRepository) UpdateProject(p *models.Project) error {
 			basic_auth = ?,
 			check_external_links = ?,
 			archive = ?,
-			user_agent = ?
+			user_agent = ?,
+			js_rendering = ?
 		WHERE id = ?
 	`
 	_, err := ds.DB.Exec(
@@ -197,6 +204,7 @@ func (ds *ProjectRepository) UpdateProject(p *models.Project) error {
 		p.CheckExternalLinks,
 		p.Archive,
 		p.UserAgent,
+		p.JSRendering,
 		p.Id,
 	)
 

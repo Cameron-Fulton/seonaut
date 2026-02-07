@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"math"
+	"net/http"
 	"net/url"
 
 	"github.com/stjudewashere/seonaut/internal/models"
@@ -49,9 +50,17 @@ func (ds *PageReportRepository) SavePageReport(r *models.PageReport, cid int64) 
 			in_sitemap,
 			depth,
 			body_hash,
-			ttfb
+			ttfb,
+			meta_keywords,
+			h1_count,
+			h2_count,
+			readability_score,
+			sim_hash,
+			schema_types,
+			has_open_graph,
+			has_twitter_card
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	stmt, err := ds.DB.Prepare(query)
 	if err != nil {
@@ -86,6 +95,14 @@ func (ds *PageReportRepository) SavePageReport(r *models.PageReport, cid int64) 
 		r.Depth,
 		r.BodyHash,
 		r.TTFB,
+		r.MetaKeywords,
+		r.H1Count,
+		r.H2Count,
+		r.ReadabilityScore,
+		r.SimHash,
+		r.SchemaTypes,
+		r.HasOpenGraph,
+		r.HasTwitterCard,
 	)
 	if err != nil {
 		return r, err
@@ -341,7 +358,15 @@ func (ds *PageReportRepository) FindAllPageReportsByCrawlId(cid int64) <-chan *m
 				in_sitemap,
 				depth,
 				body_hash,
-				ttfb
+				ttfb,
+				COALESCE(meta_keywords, ''),
+				h1_count,
+				h2_count,
+				readability_score,
+				COALESCE(sim_hash, ''),
+				COALESCE(schema_types, ''),
+				has_open_graph,
+				has_twitter_card
 			FROM pagereports
 			WHERE crawl_id = ?`
 
@@ -375,6 +400,14 @@ func (ds *PageReportRepository) FindAllPageReportsByCrawlId(cid int64) <-chan *m
 				&p.Depth,
 				&p.BodyHash,
 				&p.TTFB,
+				&p.MetaKeywords,
+				&p.H1Count,
+				&p.H2Count,
+				&p.ReadabilityScore,
+				&p.SimHash,
+				&p.SchemaTypes,
+				&p.HasOpenGraph,
+				&p.HasTwitterCard,
 			)
 			if err != nil {
 				log.Println(err)
@@ -461,6 +494,14 @@ func (ds *PageReportRepository) FindAllPageReportsByCrawlIdAndErrorType(cid int6
 				&p.Depth,
 				&p.BodyHash,
 				&p.TTFB,
+				&p.MetaKeywords,
+				&p.H1Count,
+				&p.H2Count,
+				&p.ReadabilityScore,
+				&p.SimHash,
+				&p.SchemaTypes,
+				&p.HasOpenGraph,
+				&p.HasTwitterCard,
 			)
 			if err != nil {
 				log.Println(err)
@@ -501,7 +542,15 @@ func (ds *PageReportRepository) FindPageReportById(rid int) models.PageReport {
 			in_sitemap,
 			depth,
 			body_hash,
-			ttfb
+			ttfb,
+			COALESCE(meta_keywords, ''),
+			h1_count,
+			h2_count,
+			readability_score,
+			COALESCE(sim_hash, ''),
+			COALESCE(schema_types, ''),
+			has_open_graph,
+			has_twitter_card
 		FROM pagereports
 		WHERE id = ?`
 
@@ -532,6 +581,14 @@ func (ds *PageReportRepository) FindPageReportById(rid int) models.PageReport {
 		&p.Depth,
 		&p.BodyHash,
 		&p.TTFB,
+		&p.MetaKeywords,
+		&p.H1Count,
+		&p.H2Count,
+		&p.ReadabilityScore,
+		&p.SimHash,
+		&p.SchemaTypes,
+		&p.HasOpenGraph,
+		&p.HasTwitterCard,
 	)
 	if err != nil {
 		log.Println(err)
@@ -943,6 +1000,70 @@ func (ds *PageReportRepository) FindInLinks(s string, cid int64, p int) []models
 	}
 
 	return internalLinks
+}
+
+// SavePageReportResponseHeaders saves response headers for a page report.
+func (ds *PageReportRepository) SavePageReportResponseHeaders(r *models.PageReport, cid int64, headers http.Header) error {
+	if len(headers) == 0 {
+		return nil
+	}
+
+	sqlString := "INSERT INTO response_headers (pagereport_id, crawl_id, name, value) VALUES "
+	v := []interface{}{}
+	count := 0
+	for name, values := range headers {
+		for _, value := range values {
+			if count >= 50 { // Cap at 50 headers
+				break
+			}
+			sqlString += "(?, ?, ?, ?),"
+			v = append(v, r.Id, cid, name, Truncate(value, 2048))
+			count++
+		}
+	}
+
+	if count == 0 {
+		return nil
+	}
+
+	sqlString = sqlString[0 : len(sqlString)-1]
+	stmt, err := ds.DB.Prepare(sqlString)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(v...)
+	return err
+}
+
+// FindPageReportResponseHeaders returns the response headers for a page report.
+func (ds *PageReportRepository) FindPageReportResponseHeaders(pageReportId int64) map[string]string {
+	headers := make(map[string]string)
+	rows, err := ds.DB.Query("SELECT name, value FROM response_headers WHERE pagereport_id = ?", pageReportId)
+	if err != nil {
+		log.Println(err)
+		return headers
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name, value string
+		if err := rows.Scan(&name, &value); err != nil {
+			log.Println(err)
+			continue
+		}
+		headers[name] = value
+	}
+
+	return headers
+}
+
+// SaveSchemaMarkup saves structured data extracted from a page.
+func (ds *PageReportRepository) SaveSchemaMarkup(pageReportId int64, crawlId int64, schemaType string, jsonLD string) error {
+	query := "INSERT INTO schema_markup (pagereport_id, crawl_id, schema_type, json_ld) VALUES (?, ?, ?, ?)"
+	_, err := ds.DB.Exec(query, pageReportId, crawlId, schemaType, jsonLD)
+	return err
 }
 
 // FindPageReportsRedirectingToURL returns a paginated slice of models.PageReport that are being redirected to

@@ -264,3 +264,36 @@ ERROR_PAGINATION_LINKS_DESC: Having link rel="next" and link rel="prev" tags wit
 
 ERROR_LOCALHOST_LINKS: Webpages with links to localhost
 ERROR_LOCALHOST_LINKS_DESC: Links to localhost or 127.0.0.1 are inaccessible to users and search engines, causing errors and poor SEO. To fix this, replace these links with the correct public URLs pointing to your live website.
+
+ERROR_MULTIPLE_H1_TAGS: Pages with multiple H1 tags
+ERROR_MULTIPLE_H1_TAGS_DESC: Having more than one H1 tag on a page can confuse search engines about the main topic. Each page should have a single, clear H1 heading that describes its primary content.
+
+ERROR_MULTIPLE_H2_TAGS: Pages with excessive H2 tags
+ERROR_MULTIPLE_H2_TAGS_DESC: While multiple H2 tags are common, having an excessive number may indicate poor content structure. Review these pages to ensure headings are well organized.
+
+ERROR_META_REFRESH_REDIRECT: Pages using meta refresh redirect
+ERROR_META_REFRESH_REDIRECT_DESC: Meta refresh redirects are slower and less reliable than HTTP redirects. They can confuse search engines and degrade user experience. Replace meta refresh redirects with proper 301 or 302 HTTP redirects.
+
+ERROR_LOREM_IPSUM: Pages containing Lorem Ipsum placeholder text
+ERROR_LOREM_IPSUM_DESC: Lorem Ipsum placeholder text indicates incomplete or unfinished content. Search engines may view this as low-quality content, and it creates a poor impression for visitors. Replace all placeholder text with real content before publishing.
+
+ERROR_IMAGE_LINK_MISSING_TITLE: Image links missing title attribute
+ERROR_IMAGE_LINK_MISSING_TITLE_DESC: Links that contain images but lack a title attribute may not provide enough context for screen readers and search engines. Adding a descriptive title attribute to image links improves accessibility and SEO.
+
+ERROR_LOW_READABILITY: Pages with low readability score
+ERROR_LOW_READABILITY_DESC: Pages with a Flesch Reading Ease score below 30 are considered very difficult to read. Simplify your content by using shorter sentences, common words, and clear structure to improve user engagement and SEO performance.
+
+ERROR_MISSING_SCHEMA_MARKUP: Pages missing Schema.org structured data
+ERROR_MISSING_SCHEMA_MARKUP_DESC: Schema.org structured data (JSON-LD) helps search engines understand your content and can enable rich results in search listings. Adding structured data can significantly improve click-through rates and visibility.
+
+ERROR_MISSING_OPEN_GRAPH: Pages missing Open Graph meta tags
+ERROR_MISSING_OPEN_GRAPH_DESC: Open Graph meta tags control how your pages appear when shared on social media platforms like Facebook and LinkedIn. Without them, shared links may display incorrect titles, descriptions, or images.
+
+ERROR_MISSING_TWITTER_CARD: Pages missing Twitter Card meta tags
+ERROR_MISSING_TWITTER_CARD_DESC: Twitter Card meta tags control how your pages appear when shared on Twitter/X. Without them, shared links will use a basic format that may not attract clicks.
+
+ERROR_NEAR_DUPLICATE_CONTENT: Pages with near-duplicate content
+ERROR_NEAR_DUPLICATE_CONTENT_DESC: Pages with very similar content may confuse search engines and dilute ranking signals. Consider consolidating similar pages, using canonical tags, or differentiating the content to avoid competing against yourself in search results.
+
+ERROR_MISSING_META_KEYWORDS: Pages missing meta keywords tag
+ERROR_MISSING_META_KEYWORDS_DESC: While meta keywords have minimal direct impact on modern search engine rankings, they can help with internal site organization and some secondary search engines still reference them.

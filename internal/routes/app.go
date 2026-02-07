@@ -85,6 +85,13 @@ func NewServer(container *services.Container) {
 	http.HandleFunc("POST /account/delete", container.CookieSession.Auth((userHandler.deletePostHandler)))
 	http.HandleFunc("GET /signout", container.CookieSession.Auth(userHandler.signoutHandler))
 
+	// Webhook routes
+	webhookH := webhookHandler{container}
+	http.HandleFunc("GET /webhooks", container.CookieSession.Auth(webhookH.indexHandler))
+	http.HandleFunc("POST /webhooks/add", container.CookieSession.Auth(webhookH.addHandler))
+	http.HandleFunc("GET /webhooks/delete", container.CookieSession.Auth(webhookH.deleteHandler))
+	http.HandleFunc("POST /api/webhook", webhookH.incomingHandler)
+
 	// Support SEOnaut
 	supportHandler := supportHandler{container}
 	http.HandleFunc("GET /support-seonaut", container.CookieSession.Auth(supportHandler.handleSupportSEOnaut))

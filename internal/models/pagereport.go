@@ -41,4 +41,15 @@ type PageReport struct {
 	BodyHash           string
 	Timeout            bool
 	TTFB               int
+
+	// Agency custom fields
+	MetaKeywords     string
+	H1Count          int
+	H2Count          int
+	ReadabilityScore float64
+	SimHash          string
+	SchemaTypes      string // comma-separated list of detected schema.org types
+	HasOpenGraph     bool
+	HasTwitterCard   bool
+	BodyText         string // extracted body text, not persisted to DB
 }

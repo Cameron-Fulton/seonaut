@@ -104,6 +104,13 @@ func (s *CrawlerService) StartCrawler(p models.Project, b models.BasicAuth) erro
 			}
 		}
 
+		// Wrap with JS rendering if enabled for the project
+		if p.JSRendering {
+			jsRenderer := NewJSRenderer()
+			defer jsRenderer.Close()
+			callback = s.crawlerHandler.jsRenderingWrapper(callback, jsRenderer, p.UserAgent)
+		}
+
 		c.OnResponse(callback)
 
 		log.Printf("Crawling %s...", p.URL)

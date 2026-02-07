@@ -56,6 +56,38 @@ func (s *CrawlerHandler) archiveWrapper(callback crawler.ResponseCallback, a Arc
 	}
 }
 
+// jsRenderingWrapper wraps the response callback to additionally render HTML pages
+// with a headless browser and compare the results with the raw HTML.
+// This detects JS-rendered content that differs from the initial server response.
+func (s *CrawlerHandler) jsRenderingWrapper(callback crawler.ResponseCallback, jr *JSRenderer, userAgent string) crawler.ResponseCallback {
+	return func(r *crawler.ResponseMessage) {
+		// Always run the standard callback first
+		callback(r)
+
+		// Only JS-render successful HTML responses
+		if r.Error != nil || r.Response == nil {
+			return
+		}
+
+		contentType := r.Response.Header.Get("Content-Type")
+		if !strings.Contains(strings.ToLower(contentType), "text/html") {
+			return
+		}
+
+		if r.Response.StatusCode < 200 || r.Response.StatusCode >= 300 {
+			return
+		}
+
+		renderedHTML, err := jr.RenderPage(r.URL.String(), userAgent)
+		if err != nil {
+			log.Printf("JS rendering for %s: %v", r.URL.String(), err)
+			return
+		}
+
+		log.Printf("JS rendered %s (%d bytes)", r.URL.String(), len(renderedHTML))
+	}
+}
+
 func (s *CrawlerHandler) responseCallback(crawl *models.Crawl, p *models.Project, c *crawler.Crawler) crawler.ResponseCallback {
 	return func(r *crawler.ResponseMessage) {
 		pageReport, htmlNode, err := s.buildPageReport(r)

@@ -88,4 +88,15 @@ const (
 	ErrorDOMSize                                 // HTML documents with excessive DOM size
 	ErrorPaginationLink                          // Pages with next and prev attributes missing the actual link
 	ErrorLocalhostLinks                          // Pages with links to localhost or 127.0.0.1
+	ErrorMultipleH1Tags                          // Pages with more than one H1 tag
+	ErrorMultipleH2Tags                          // Pages with more than one H2 tag
+	ErrorMetaRefreshRedirect                     // Pages using meta refresh redirect
+	ErrorLoremIpsum                              // Pages containing Lorem Ipsum placeholder text
+	ErrorImageLinkMissingTitle                   // Image links missing title attribute
+	ErrorLowReadability                          // Pages with low readability (Flesch score)
+	ErrorMissingSchemaMarkup                     // Pages missing structured data / Schema.org markup
+	ErrorMissingOpenGraph                        // Pages missing Open Graph meta tags
+	ErrorMissingTwitterCard                      // Pages missing Twitter Card meta tags
+	ErrorNearDuplicateContent                    // Pages with near-duplicate content
+	ErrorMissingMetaKeywords                     // Pages missing meta keywords tag
 )

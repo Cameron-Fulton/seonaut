@@ -48,6 +48,9 @@ func (sr *SqlReporter) GetAllReporters() []models.MultipageCallback {
 		// Add canonical issue reporters
 		sr.CanonicalizedToNonCanonical,
 		sr.CanonicalizedToNonIndexable,
+
+		// Add near-duplicate content reporter
+		sr.NearDuplicateContentReporter,
 	}
 }
 

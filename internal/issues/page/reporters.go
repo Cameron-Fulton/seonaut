@@ -97,5 +97,29 @@ func GetAllReporters() []*models.PageIssueReporter {
 
 		// Add Viewport issue report
 		NewViewportTagReporter(),
+
+		// Add heading count issue reporters
+		NewMultipleH1TagsReporter(),
+		NewMultipleH2TagsReporter(),
+
+		// Add meta refresh issue reporter
+		NewMetaRefreshRedirectReporter(),
+
+		// Add placeholder content reporter
+		NewLoremIpsumReporter(),
+
+		// Add image link title reporter
+		NewImageLinkMissingTitleReporter(),
+
+		// Add readability reporter
+		NewLowReadabilityReporter(),
+
+		// Add structured data reporters
+		NewMissingSchemaMarkupReporter(),
+		NewMissingMetaKeywordsReporter(),
+
+		// Add social meta reporters
+		NewMissingOpenGraphReporter(),
+		NewMissingTwitterCardReporter(),
 	}
 }

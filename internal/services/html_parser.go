@@ -117,6 +117,20 @@ func NewHTMLParser(u *url.URL, status int, headers *http.Header, body []byte, co
 		if err != nil {
 			log.Printf("body hashString URL: %s\nError %v", u.String(), err)
 		}
+
+		// Agency custom field extraction
+		pageReport.MetaKeywords = parser.htmlMetaKeywords()
+		pageReport.H1Count = parser.htmlH1Count()
+		pageReport.H2Count = parser.htmlH2Count()
+		pageReport.HasOpenGraph = parser.htmlHasOpenGraph()
+		pageReport.HasTwitterCard = parser.htmlHasTwitterCard()
+		pageReport.SchemaTypes = parser.htmlSchemaTypes()
+
+		// Extract body text for readability and similarity analysis
+		bodyText := parser.extractBodyText()
+		pageReport.BodyText = bodyText
+		pageReport.ReadabilityScore = calculateReadability(bodyText)
+		pageReport.SimHash = calculateSimHash(bodyText)
 	}
 
 	return &pageReport, parser.getHtmlNode(), nil

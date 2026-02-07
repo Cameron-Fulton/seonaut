@@ -27,11 +27,28 @@ type DBConfig struct {
 	Name   string `mapstructure:"database"`
 }
 
+// AIProviderConfig stores configuration for AI providers.
+type AIProviderConfig struct {
+	ClaudeAPIKey  string `mapstructure:"claude_api_key"`
+	ClaudeModel   string `mapstructure:"claude_model"`
+	LMStudioURL   string `mapstructure:"lmstudio_url"`
+	LMStudioModel string `mapstructure:"lmstudio_model"`
+	Enabled       bool   `mapstructure:"enabled"`
+}
+
+// IntegrationsProviderConfig stores configuration for external API integrations.
+type IntegrationsProviderConfig struct {
+	PageSpeedAPIKey string `mapstructure:"pagespeed_api_key"`
+	AhrefsAPIKey    string `mapstructure:"ahrefs_api_key"`
+}
+
 // Config stores the configuration for the application.
 type Config struct {
-	Crawler    *CrawlerConfig    `mapstructure:"crawler"`
-	HTTPServer *HTTPServerConfig `mapstructure:"server"`
-	DB         *DBConfig         `mapstructure:"database"`
+	Crawler      *CrawlerConfig              `mapstructure:"crawler"`
+	HTTPServer   *HTTPServerConfig           `mapstructure:"server"`
+	DB           *DBConfig                   `mapstructure:"database"`
+	AI           *AIProviderConfig           `mapstructure:"ai"`
+	Integrations *IntegrationsProviderConfig `mapstructure:"integrations"`
 }
 
 // NewConfig loads the configuration from the specified file and path.

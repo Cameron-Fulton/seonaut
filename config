@@ -12,3 +12,18 @@ database = "seonaut"
 
 [crawler]
 agent = "Mozilla/5.0 (compatible; SEOnautBot/1.0; +https://seonaut.org/bot)"
+
+# AI Provider Configuration
+# Uncomment and configure either Claude or LM Studio (or both)
+[ai]
+enabled = false
+# claude_api_key = ""
+# claude_model = "claude-sonnet-4-5-20250929"
+# lmstudio_url = "http://localhost:1234"
+# lmstudio_model = "default"
+
+# External API Integrations
+# Uncomment and add your API keys
+[integrations]
+# pagespeed_api_key = ""
+# ahrefs_api_key = ""

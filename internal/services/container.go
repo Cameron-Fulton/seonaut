@@ -33,14 +33,24 @@ type Container struct {
 	ArchiveService     *ArchiveService
 	ReplayService      *ReplayService
 
-	db                   *sql.DB
-	issueRepository      *repository.IssueRepository
-	pageReportRepository *repository.PageReportRepository
-	userRepository       *repository.UserRepository
-	projectRepository    *repository.ProjectRepository
-	exportRepository     *repository.ExportRepository
-	crawlRepository      *repository.CrawlRepository
-	dashboardRepository  *repository.DashboardRepository
+	// Agency custom services
+	WebhookService      *WebhookService
+	AIService           *AIService
+	ExtractorService    *ExtractorService
+	IntegrationsService *IntegrationsService
+
+	db                     *sql.DB
+	issueRepository        *repository.IssueRepository
+	pageReportRepository   *repository.PageReportRepository
+	userRepository         *repository.UserRepository
+	projectRepository      *repository.ProjectRepository
+	exportRepository       *repository.ExportRepository
+	crawlRepository        *repository.CrawlRepository
+	dashboardRepository    *repository.DashboardRepository
+	webhookRepository      *repository.WebhookRepository
+	aiRepository           *repository.AIRepository
+	extractorRepository    *repository.ExtractorRepository
+	integrationsRepository *repository.IntegrationsRepository
 }
 
 func NewContainer(configFile string) *Container {
@@ -63,6 +73,12 @@ func NewContainer(configFile string) *Container {
 	c.InitRenderer()
 	c.InitCookieSession()
 	c.InitReplayService()
+
+	// Agency custom services
+	c.InitWebhookService()
+	c.InitAIService()
+	c.InitExtractorService()
+	c.InitIntegrationsService()
 
 	return c
 }
@@ -108,6 +124,10 @@ func (c *Container) InitRepositories() {
 	c.exportRepository = &repository.ExportRepository{DB: c.db}
 	c.crawlRepository = &repository.CrawlRepository{DB: c.db}
 	c.dashboardRepository = &repository.DashboardRepository{DB: c.db}
+	c.webhookRepository = &repository.WebhookRepository{DB: c.db}
+	c.aiRepository = &repository.AIRepository{DB: c.db}
+	c.extractorRepository = &repository.ExtractorRepository{DB: c.db}
+	c.integrationsRepository = &repository.IntegrationsRepository{DB: c.db}
 
 	// Clean up unfinished crawls.
 	c.crawlRepository.DeleteUnfinishedCrawls()
@@ -252,4 +272,39 @@ func (c *Container) InitArchiveService() {
 // Init the WACZ archive replay service.
 func (c *Container) InitReplayService() {
 	c.ReplayService = NewReplayService()
+}
+
+// Init the webhook service.
+func (c *Container) InitWebhookService() {
+	c.WebhookService = NewWebhookService(c.webhookRepository)
+}
+
+// Init the AI service.
+func (c *Container) InitAIService() {
+	aiConfig := &AIConfig{}
+	if c.Config.AI != nil {
+		aiConfig.ClaudeAPIKey = c.Config.AI.ClaudeAPIKey
+		aiConfig.ClaudeModel = c.Config.AI.ClaudeModel
+		aiConfig.LMStudioURL = c.Config.AI.LMStudioURL
+		aiConfig.LMStudioModel = c.Config.AI.LMStudioModel
+		aiConfig.Enabled = c.Config.AI.Enabled
+	}
+
+	c.AIService = NewAIService(c.aiRepository, aiConfig)
+}
+
+// Init the custom extractor service.
+func (c *Container) InitExtractorService() {
+	c.ExtractorService = NewExtractorService(c.extractorRepository)
+}
+
+// Init the external API integrations service.
+func (c *Container) InitIntegrationsService() {
+	intConfig := &IntegrationsConfig{}
+	if c.Config.Integrations != nil {
+		intConfig.PageSpeedAPIKey = c.Config.Integrations.PageSpeedAPIKey
+		intConfig.AhrefsAPIKey = c.Config.Integrations.AhrefsAPIKey
+	}
+
+	c.IntegrationsService = NewIntegrationsService(c.integrationsRepository, intConfig)
 }
